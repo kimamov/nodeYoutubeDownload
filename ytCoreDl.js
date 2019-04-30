@@ -15,9 +15,26 @@ app.get('/download',(req,res)=>{
   //getVideo(req.query.videolink)
   //res.stream(ytdl(req.query.videolink).pipe(fs.createWriteStream('video.flv')))
   //res.download(`downloading ${req.query.videolink}`)
+  const urlParts=req.query.videolink.split('/watch?v=')
+  res.header('Content-Disposition', 'attachment; filename='+urlParts[1]+'.flv');
   learnBuffer(req.query.videolink,(chunk)=>{
     res.write(chunk)
-    console.log('x')
+  },()=>{
+    res.end()
+  })
+  
+})
+app.get('/audio',(req,res)=>{
+  //getVideo(req.query.videolink)
+  //res.stream(ytdl(req.query.videolink).pipe(fs.createWriteStream('video.flv')))
+  //res.download(`downloading ${req.query.videolink}`)
+  let urlParts=req.query.videolink.split('/watch?v=')
+  if(urlParts[1]===undefined){
+    urlParts=req.query.videolink.split('outu.be/')
+  }
+  res.header('Content-Disposition', 'attachment; filename='+urlParts[1]+'.mp3');
+  audioDownload(req.query.videolink,(chunk)=>{
+    res.write(chunk)
   },()=>{
     res.end()
   })
@@ -37,7 +54,17 @@ learnBuffer=(url, callback, end)=>{
   .on('data',(chunk)=>{
     callback(chunk)
   }).on('end',()=>{
-    console.log('finished')
+    //console.log('finished')
+    end()
+  })
+  
+}
+audioDownload=(url, callback, end)=>{
+  ytdl(url,{filter: "audioonly",quality: 'lowest'})
+  .on('data',(chunk)=>{
+    callback(chunk)
+  }).on('end',()=>{
+    //console.log('finished')
     end()
   })
   
