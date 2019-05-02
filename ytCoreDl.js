@@ -28,7 +28,6 @@ app.get('/dl',(req,res)=>{
   },()=>{
     res.end()
   })
-  
 })
 
 extractOptions=(str)=>{
@@ -45,9 +44,7 @@ extractOptions=(str)=>{
 
 
 app.get('/info',(req,res)=>{
-  //getVideo(req.query.videolink)
-  //res.stream(ytdl(req.query.videolink).pipe(fs.createWriteStream('video.flv')))
-  //res.download(`downloading ${req.query.videolink}`)
+
   let urlParts=req.query.videolink.split('/watch?v=')
   if(urlParts[1]===undefined){
     urlParts=req.query.videolink.split('outu.be/')
@@ -59,8 +56,32 @@ app.get('/info',(req,res)=>{
     console.log(info.thumbnail_url)
     res.send(JSON.stringify(info))
   })
-  
-  
+})
+
+app.get('/simpleinfo',(req,res)=>{
+
+  ytdl.getInfo(req.query.videolink,(error, info)=>{
+    if(error){
+      throw error
+    }
+    const simpleInfo=
+        {thumbnail:info.thumbnail_url,
+        title:info.title,
+        length:info.length_seconds, 
+        formats: []}
+      if(info.formats){
+        info.formats.map(format=>{
+          simpleInfo.formats.push(
+            {type: format.type.split(';')[0],
+            videoOnly: format.audioBitrate===null,
+            quality: format.resolution==null? format.audioBitrate+' bitrate' : format.resolution,
+            itag: format.itag,
+            url: format.url
+            })
+        })
+      }
+    res.send(simpleInfo)
+  })
 })
  
 getVideo=(url,options,callback, end)=>{
@@ -73,7 +94,7 @@ getVideo=(url,options,callback, end)=>{
   })
 }
 
-audioDownload=(url, callback, end)=>{
+/* audioDownload=(url, callback, end)=>{
   ytdl(url,{filter: "audioonly",quality: 'lowest'})
   .on('data',(chunk)=>{
     callback(chunk)
@@ -81,10 +102,9 @@ audioDownload=(url, callback, end)=>{
     //console.log('finished')
     end()
   })
-  
 }
 
-
+ */
 app.listen(port,()=>{
   console.log(`server running on port ${port}`)
 })
