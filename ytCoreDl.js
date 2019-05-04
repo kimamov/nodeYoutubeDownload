@@ -1,4 +1,3 @@
-const fs = require('fs');
 const ytdl = require('ytdl-core');
 const express=require('express')
 const app=express()
@@ -14,6 +13,8 @@ app.use(function(req, res, next) {
 
 
 app.get('/dl',(req,res)=>{
+  // get video and write it into the res chunk by chunk
+  if(ytdl.validateURL(req.query.videolink)){
   let urlParts=req.query.videolink.split('/watch?v=')
   if(urlParts[1]===undefined){
     urlParts=req.query.videolink.split('outu.be/')
@@ -28,9 +29,14 @@ app.get('/dl',(req,res)=>{
   },()=>{
     res.end()
   })
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
 })
 
 extractOptions=(str)=>{
+  //create object from send query
   let output={}
   if(str){
     optionArr=str.split(',')
@@ -44,8 +50,9 @@ extractOptions=(str)=>{
 
 
 app.get('/info',(req,res)=>{
-
-  let urlParts=req.query.videolink.split('/watch?v=')
+  // send all info from api
+  if(ytdl.validateURL(req.query.videolink)){
+    let urlParts=req.query.videolink.split('/watch?v=')
   if(urlParts[1]===undefined){
     urlParts=req.query.videolink.split('outu.be/')
   }
@@ -56,10 +63,16 @@ app.get('/info',(req,res)=>{
     console.log(info.thumbnail_url)
     res.send(JSON.stringify(info))
   })
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
+  
 })
 
 app.get('/simpleinfo',(req,res)=>{
-
+  // send only basic info needed for the front end to save some data
+  if(ytdl.validateURL(req.query.videolink)){
   ytdl.getInfo(req.query.videolink,(error, info)=>{
     if(error){
       throw error
@@ -82,6 +95,10 @@ app.get('/simpleinfo',(req,res)=>{
       }
     res.send(simpleInfo)
   })
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
 })
  
 getVideo=(url,options,callback, end)=>{
