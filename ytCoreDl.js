@@ -1,8 +1,9 @@
 const ytdl = require('ytdl-core');
 const express=require('express')
+const fs=require('fs')
 const app=express()
 const port=5000;
-
+const ffmpeg = require('fluent-ffmpeg');
 
 
 app.use(function(req, res, next) {
@@ -19,16 +20,41 @@ app.get('/dl',(req,res)=>{
   if(urlParts[1]===undefined){
     urlParts=req.query.videolink.split('outu.be/')
   }
-  res.header('Content-Disposition', 'attachment; filename='+urlParts[1]+'.flv');
-  console.log(req.query.videolink)
+  const nameFromQuery=req.query.name || 'youtubevideo'
+  const mimeFromQuery=req.query.mime || 'mp4'
+
+  res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
+  //console.log(req.query.videolink)
   let options=extractOptions(req.query.options)
-  console.log(options)
+  //console.log(options)
   
   getVideo(req.query.videolink,options,(chunk)=>{
     res.write(chunk)
   },()=>{
     res.end()
   })
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
+})
+
+app.get('/dlmp3',(req,res)=>{
+  if(ytdl.validateURL(req.query.videolink)){
+
+  const nameFromQuery=req.query.name || 'youtubevideo'
+  const mimeFromQuery=req.query.mime || 'mp3'
+
+  res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
+  let options=extractOptions(req.query.options)
+  const url=req.query.videolink
+  stream = new ffmpeg(ytdl(url))
+
+stream.on('error', function (err) {
+  console.log(err)
+})
+.format('mp3').pipe(res)
+
   }else{
     res.status(500)
     res.send({message: 'NOT A YOUTUBE URL'})
@@ -60,7 +86,7 @@ app.get('/info',(req,res)=>{
     if(error){
       throw error
     }
-    console.log(info.thumbnail_url)
+    /* console.log(info.thumbnail_url) */
     res.send(JSON.stringify(info))
   })
   }else{
