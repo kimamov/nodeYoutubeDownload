@@ -16,10 +16,7 @@ app.use(function(req, res, next) {
 app.get('/dl',(req,res)=>{
   // get video and write it into the res chunk by chunk
   if(ytdl.validateURL(req.query.videolink)){
-  let urlParts=req.query.videolink.split('/watch?v=')
-  if(urlParts[1]===undefined){
-    urlParts=req.query.videolink.split('outu.be/')
-  }
+  
   const nameFromQuery=req.query.name || 'youtubevideo'
   const mimeFromQuery=req.query.mime || 'mp4'
 
@@ -48,10 +45,10 @@ app.get('/dlmp3',(req,res)=>{
   res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
   let options=extractOptions(req.query.options)
   const url=req.query.videolink
-  stream = new ffmpeg(ytdl(url))
+  stream = new ffmpeg(ytdl(url,options))
 
 stream.on('error', function (err) {
-  console.log(err)
+  res.send('something went wrong')
 })
 .format('mp3').pipe(res)
 
@@ -86,7 +83,6 @@ app.get('/info',(req,res)=>{
     if(error){
       throw error
     }
-    /* console.log(info.thumbnail_url) */
     res.send(JSON.stringify(info))
   })
   }else{
@@ -104,7 +100,7 @@ app.get('/simpleinfo',(req,res)=>{
       throw error
     }
     const simpleInfo=
-        {thumbnail:info.thumbnail_url,
+        {thumbnail:info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
         title:info.title,
         length:info.length_seconds, 
         formats: []}
