@@ -13,7 +13,7 @@ app.use(function(req, res, next) {
 });
 
 
-app.get('/dl',(req,res)=>{
+/* app.get('/dl',(req,res)=>{
   // get video and write it into the res chunk by chunk
   if(ytdl.validateURL(req.query.videolink)){
   
@@ -34,7 +34,48 @@ app.get('/dl',(req,res)=>{
     res.status(500)
     res.send({message: 'NOT A YOUTUBE URL'})
   }
+}) */
+
+
+app.get('/dl',(req,res)=>{
+  //return res.send(req.query.videolink)
+  // get video and write it into the res chunk by chunk
+  if(ytdl.validateURL(req.query.videolink)){
+  
+  const options=extractOptions(req.query.options)
+
+  const mimeFromQuery=req.query.mime || 'mp4'
+
+
+  let videoStream=ytdl(req.query.videolink, options)
+
+  videoStream.on('info',(info)=>{
+    let nameFromQuery;
+    if(req.query.name){
+      // sanatize string make it ascii only
+      nameFromQuery=req.query.name.replace('|','').replace(/[^\x00-\x7F]/g, "");
+    }
+    else if(info.player_response.videoDetails.title){
+      // sanatize string make it ascii only
+      nameFromQuery=info.player_response.videoDetails.title.replace('|','').replace(/[^\x00-\x7F]/g, "");      
+    }
+    else{
+      nameFromQuery='youtubevideo';
+    }
+
+    res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
+  })
+
+
+  videoStream.pipe(res);
+
+
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
 })
+
 
 app.get('/dlmp3',(req,res)=>{
   if(ytdl.validateURL(req.query.videolink)){
@@ -133,17 +174,6 @@ getVideo=(url,options,callback, end)=>{
   })
 }
 
-/* audioDownload=(url, callback, end)=>{
-  ytdl(url,{filter: "audioonly",quality: 'lowest'})
-  .on('data',(chunk)=>{
-    callback(chunk)
-  }).on('end',()=>{
-    //console.log('finished')
-    end()
-  })
-}
-
- */
 app.listen(port,()=>{
   console.log(`server running on port ${port}`)
 })
