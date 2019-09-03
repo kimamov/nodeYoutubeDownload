@@ -185,7 +185,7 @@ app.get('/simpleinfo',(req,res)=>{
             {
               type: format.type.split(';')[0],
               videoOnly: format.audioBitrate===null,
-              quality: format.resolution==null? format.audioBitrate+' bitrate' : format.resolution,
+              quality: format.resolution==null? (format.audioBitrate+' bitrate') : format.resolution,
               itag: format.itag,
               url: format.url
             })
