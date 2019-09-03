@@ -201,6 +201,42 @@ app.get('/simpleinfo',(req,res)=>{
   }
 })
 
+app.get('/simpleinfoapp',(req,res)=>{
+  // send only basic info needed for the front end to save some data
+  if(ytdl.validateURL(req.query.videolink)){
+  ytdl.getInfo(req.query.videolink,(error, info)=>{
+    if(error){
+      //throw error
+    }
+    const simpleInfo=
+      {
+        thumbnail:info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
+        title:info.title,
+        length:info.length_seconds, 
+        formats: []
+      }
+      if(info.formats){
+        info.formats.map(format=>{
+          simpleInfo.formats.push(
+            {
+              type: format.type.split(';')[0],
+              videoOnly: format.audioBitrate===null,
+              quality: format.resolution==null? (format.audioBitrate+' bitrate') : format.resolution,
+              itag: format.itag,
+              url: format.url
+            })
+        })
+      }
+      //const simpleInfo=info;
+      //console.dir(info)
+    res.send(simpleInfo)
+  })
+  }else{
+    res.status(500)
+    res.send({message: 'NOT A YOUTUBE URL'})
+  }
+})
+
 getVideo=(url,options,callback, end)=>{
   this.options=options? options: null
   ytdl(url,this.options)
