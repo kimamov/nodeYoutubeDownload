@@ -13,28 +13,6 @@ app.use(function(req, res, next) {
 });
 
 
-/* app.get('/dl',(req,res)=>{
-  // get video and write it into the res chunk by chunk
-  if(ytdl.validateURL(req.query.videolink)){
-  
-  const nameFromQuery=req.query.name || 'youtubevideo'
-  const mimeFromQuery=req.query.mime || 'mp4'
-
-  res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
-  //console.log(req.query.videolink)
-  let options=extractOptions(req.query.options)
-  //console.log(options)
-  
-  getVideo(req.query.videolink,options,(chunk)=>{
-    res.write(chunk)
-  },()=>{
-    res.end()
-  })
-  }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
-  }
-}) */
 
 
 app.get('/dl',(req,res)=>{
@@ -64,6 +42,9 @@ app.get('/dl',(req,res)=>{
     }
 
     res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
+  }).on('error',(error)=>{
+    res.status(500)
+    res.send(('download failed'))
   })
 
 
@@ -71,8 +52,8 @@ app.get('/dl',(req,res)=>{
 
 
   }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
   }
 })
 
@@ -89,13 +70,14 @@ app.get('/dlmp3',(req,res)=>{
   stream = new ffmpeg(ytdl(url,options))
 
 stream.on('error', function (err) {
-  res.send('something went wrong')
+  res.status(500)
+  res.send('failed to load video')
 })
 .format('mp3').pipe(res)
 
   }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
   }
 })
 
@@ -122,55 +104,26 @@ app.get('/info',(req,res)=>{
   }
   ytdl.getInfo(req.query.videolink,(error, info)=>{
     if(error){
-      throw error
+      res.status(500)
+      res.send('could not get info')
     }
     res.send(JSON.stringify(info))
   })
   }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
   }
   
 })
-/* 
-app.get('/simpleinfo',(req,res)=>{
-  // send only basic info needed for the front end to save some data
-  if(ytdl.validateURL(req.query.videolink)){
-  ytdl.getInfo(req.query.videolink,(error, info)=>{
-    if(error){
-      //throw error
-    }
-    const simpleInfo=
-        {thumbnail:info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
-        title:info.title,
-        length:info.length_seconds, 
-        formats: []}
-      if(info.formats){
-        info.formats.map(format=>{
-          simpleInfo.formats.push(
-            {type: format.type.split(';')[0],
-            videoOnly: format.audioBitrate===null,
-            quality: format.resolution==null? format.audioBitrate+' bitrate' : format.resolution,
-            itag: format.itag,
-            url: format.url
-            })
-        })
-      }
-    res.send(simpleInfo)
-  })
-  }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
-  }
-})
- */
+
 
 app.get('/simpleinfo',(req,res)=>{
   // send only basic info needed for the front end to save some data
   if(ytdl.validateURL(req.query.videolink)){
   ytdl.getInfo(req.query.videolink,(error, info)=>{
     if(error){
-      //throw error
+      res.status(500)
+      res.send('could not get info')
     }
     const simpleInfo=
       {
@@ -191,28 +144,25 @@ app.get('/simpleinfo',(req,res)=>{
             })
         })
       }
-      //const simpleInfo=info;
-      //console.dir(info)
+
     res.send(simpleInfo)
   })
   }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
   }
 })
 
-app.get('/simpleinfoapp',(req,res)=>{
-  // send only basic info needed for the front end to save some data
+app.get('/formatlist',(req,res)=>{
+  // send only updated formats since they the links fail after a while
   if(ytdl.validateURL(req.query.videolink)){
   ytdl.getInfo(req.query.videolink,(error, info)=>{
     if(error){
-      //throw error
+      res.status(500)
+      res.send('could not get info')
     }
     const simpleInfo=
       {
-        thumbnail:info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
-        title:info.title,
-        length:info.length_seconds, 
         formats: []
       }
       if(info.formats){
@@ -227,25 +177,16 @@ app.get('/simpleinfoapp',(req,res)=>{
             })
         })
       }
-      //const simpleInfo=info;
-      //console.dir(info)
+
     res.send(simpleInfo)
   })
   }else{
-    res.status(500)
-    res.send({message: 'NOT A YOUTUBE URL'})
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
   }
 })
 
-getVideo=(url,options,callback, end)=>{
-  this.options=options? options: null
-  ytdl(url,this.options)
-  .on('data',(chunk)=>{
-    callback(chunk)
-  }).on('end',()=>{
-    end()
-  })
-}
+
 
 app.listen(port,()=>{
   console.log(`server running on port ${port}`)
