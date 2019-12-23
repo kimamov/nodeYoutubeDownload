@@ -98,21 +98,21 @@ app.get('/downloadmp3',async (req,res)=>{
   const download=ytdl(req.query.videolink, options);
   download.on("error",(error)=>{
     console.log("download failed... "+error)
-    return res.send("youtube download failed", 500)
+    return res.end("youtube download failed", 500)
   })
   stream = new ffmpeg(download)
+  if(req.query.title) stream.outputOptions('-metadata title="'+req.query.title+'"')
+  if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"')
 
   stream.on('error', function (err) {
     console.log("was closed")
     console.log(err)
-    res.status(500)
-    return res.send('failed to load video')
+    return res.end('failed to load video', 500)
   })
   .format('mp3').pipe(res)
 
   }else{
-    res.status(404)
-    res.send('NOT A YOUTUBE URL')
+    res.end('NOT A YOUTUBE URL', 404)
   }
 })
 
