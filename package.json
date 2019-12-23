@@ -12,6 +12,6 @@
     "express": "^4.17.1",
     "fluent-ffmpeg": "^2.1.2",
     "fs": "0.0.1-security",
-    "ytdl-core": "^0.29.7"
+    "ytdl-core": "^1.0.3"
   }
 }

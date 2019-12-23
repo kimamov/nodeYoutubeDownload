@@ -81,6 +81,41 @@ stream.on('error', function (err) {
   }
 })
 
+app.get('/downloadmp3',async (req,res)=>{
+  if(ytdl.validateURL(req.query.videolink)){
+
+  let title='youtube_mp3';
+  if(req.query.name){
+    title=req.query.name
+  }else{
+    const videoInfo=await ytdl.getBasicInfo(req.query.videolink);
+    title=videoInfo.title;
+  }
+  const options=req.query.format? {format: req.query.format} : {};
+
+  res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');
+  
+  const download=ytdl(req.query.videolink, options);
+  download.on("error",(error)=>{
+    console.log("download failed... "+error)
+    return res.send("youtube download failed", 500)
+  })
+  stream = new ffmpeg(download)
+
+  stream.on('error', function (err) {
+    console.log("was closed")
+    console.log(err)
+    res.status(500)
+    return res.send('failed to load video')
+  })
+  .format('mp3').pipe(res)
+
+  }else{
+    res.status(404)
+    res.send('NOT A YOUTUBE URL')
+  }
+})
+
 extractOptions=(str)=>{
   //create object from send query
   let output={}
