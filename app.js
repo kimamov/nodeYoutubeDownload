@@ -43,17 +43,57 @@ app.get('/dl',(req,res)=>{
 
     res.header('Content-Disposition', 'attachment; filename='+nameFromQuery+'.'+mimeFromQuery);
   }).on('error',(error)=>{
-    res.status(500)
-    res.send(('download failed'))
+    return res.end('download failed', 500)
   })
 
 
-  videoStream.pipe(res);
+  return videoStream.pipe(res);
 
 
   }else{
-    res.status(404)
-    res.send('NOT A YOUTUBE URL')
+    res.end('NOT A YOUTUBE URL', 404)
+  }
+})
+
+app.get('/download',(req,res)=>{
+  if(ytdl.validateURL(req.query.videolink)){
+  
+    const options=req.query.format? {format: req.query.format} : {};
+
+
+    let videoStream=ytdl(req.query.videolink, options)
+
+
+    videoStream.on('info',(info)=>{
+      let title="youtubevideo";
+      let mime="mp4";
+      if(req.query.name){
+        // sanatize string make it ascii only
+        title=req.query.name.replace('|','').replace(/[^\x00-\x7F]/g, "");
+      }
+      else if(info.player_response.videoDetails.title){
+        // sanatize string make it ascii only
+        title=info.player_response.videoDetails.title.replace('|','').replace(/[^\x00-\x7F]/g, "");      
+      }
+  
+      if(info.formats && info.formats.length && req.query.format){
+        // find the container of the selected format
+        const selectedFormat=info.formats.find(item=>item.itag==req.query.format);
+        if(selectedFormat) mime=selectedFormat.container;
+      }
+
+      res.header('Content-Disposition', 'attachment; filename='+title+'.'+mime);
+    }).on('error',(error)=>{
+      console.log(error)
+      return res.end('download failed', 500)
+    })
+
+
+    return videoStream.pipe(res);
+
+
+  }else{
+    res.end('NOT A YOUTUBE URL', 404)
   }
 })
 
@@ -83,26 +123,33 @@ stream.on('error', function (err) {
 
 app.get('/downloadmp3',async (req,res)=>{
   if(ytdl.validateURL(req.query.videolink)){
-
-  let title='youtube_mp3';
-  if(req.query.name){
-    title=req.query.name
-  }else{
-    const videoInfo=await ytdl.getBasicInfo(req.query.videolink);
-    title=videoInfo.title;
-  }
+    
+  /* set format if was sent */
   const options=req.query.format? {format: req.query.format} : {};
 
-  res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');
-  
+  /* start download */
   const download=ytdl(req.query.videolink, options);
-  download.on("error",(error)=>{
+
+  let title='youtube_mp3';
+  
+  /* set title  */
+  download.on("info",(info)=>{
+    title=req.query.name? req.query.name : info.player_response.videoDetails.title;
+    /* make title ascii only */
+    title=title.title.replace('|','').replace(/[^\x00-\x7F]/g, "");  
+  }).on("error",(error)=>{
     console.log("download failed... "+error)
     return res.end("youtube download failed", 500)
   })
+  
+  res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');
+
+
   stream = new ffmpeg(download)
-  if(req.query.title) stream.outputOptions('-metadata title="'+req.query.title+'"')
-  if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"')
+
+  // handle tags on the frontend now
+  /* if(req.query.title) stream.outputOptions('-metadata title="'+req.query.title+'"')
+  if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"') */
 
   stream.on('error', function (err) {
     console.log("was closed")
