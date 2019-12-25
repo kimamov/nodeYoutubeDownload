@@ -136,7 +136,7 @@ app.get('/downloadmp3',async (req,res)=>{
   download.on("info",(info)=>{
     title=req.query.name? req.query.name : info.player_response.videoDetails.title;
     /* make title ascii only */
-    title=title.title.replace('|','').replace(/[^\x00-\x7F]/g, "");  
+    title=title.replace('|','').replace(/[^\x00-\x7F]/g, "");  
   }).on("error",(error)=>{
     console.log("download failed... "+error)
     return res.end("youtube download failed", 500)
@@ -204,34 +204,35 @@ app.get('/simpleinfo',(req,res)=>{
   if(ytdl.validateURL(req.query.videolink)){
   ytdl.getInfo(req.query.videolink,(error, info)=>{
     if(error){
-      res.status(500)
-      res.send('could not get info')
+      return res.end('could not get info', 500)
     }
     const simpleInfo=
       {
         thumbnail:info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
         title:info.title,
         length:info.length_seconds, 
-        formats: []
+        formats: [],
       }
       if(info.formats){
         info.formats.map(format=>{
           simpleInfo.formats.push(
             {
-              type: format.type.split(';')[0],
+              type: format.mimeType.split(';')[0],
               videoOnly: format.audioBitrate===null,
-              quality: format.resolution==null? (format.audioBitrate+' bitrate') : format.resolution,
+              qualityLabel: format.qualityLabel,
+              audioBitrate: format.audioBitrate,
               itag: format.itag,
-              url: format.url
+              url: format.url,
+              container: format.container
             })
         })
       }
 
-    res.send(simpleInfo)
+    return res.send(simpleInfo)
   })
   }else{
-    res.status(404)
-    res.send('NOT A YOUTUBE URL')
+    
+    res.end('NOT A YOUTUBE URL', 404)
   }
 })
 
