@@ -64,7 +64,7 @@ app.get('/download',(req,res)=>{
     let videoStream=ytdl(req.query.videolink, options)
 
 
-    videoStream.on('info',(info)=>{
+    videoStream.on('info',(info, format)=>{
       let title="youtubevideo";
       let mime="mp4";
       if(req.query.name){
@@ -76,13 +76,15 @@ app.get('/download',(req,res)=>{
         title=info.player_response.videoDetails.title.replace('|','').replace(/[^\x00-\x7F]/g, "");      
       }
   
-      if(info.formats && info.formats.length && req.query.format){
-        // find the container of the selected format
+      /* if(info.formats && info.formats.length && req.query.format){
         const selectedFormat=info.formats.find(item=>item.itag==req.query.format);
         if(selectedFormat) mime=selectedFormat.container;
-      }
+      } */
+      if(format && format.container) mime=format.container
 
       res.header('Content-Disposition', 'attachment; filename='+title+'.'+mime);
+    }).on("response",(data)=>{
+      console.log(data.headers)
     }).on('error',(error)=>{
       console.log(error)
       return res.end('download failed', 500)
@@ -95,6 +97,28 @@ app.get('/download',(req,res)=>{
   }else{
     res.end('NOT A YOUTUBE URL', 404)
   }
+})
+
+app.get("/getsize",(req, res)=>{
+  if(ytdl.validateURL(req.query.videolink)){
+    const options=req.query.format? {format: req.query.format} : {};
+    const videoStream=ytdl(req.query.videolink, options)
+    const response={}
+    videoStream.on("info", (info, format)=>{
+      response.format=format;
+    }).on("response",(data)=>{
+      if(data.headers["content-length"]){
+        response.size=data.headers["content-length"];
+        return res.send(response)
+      }
+      return res.send("SIZE NOT FOUND", 404);
+    }).on("error",()=>{
+      console.log(error)
+      return res.send("SOMETHING WENT WRONG", 500)
+    })
+
+  } 
+  else res.end("NOT A YOUTUBE URL", 404)
 })
 
 
@@ -180,16 +204,13 @@ extractOptions=(str)=>{
 app.get('/info',(req,res)=>{
   // send all info from api
   if(ytdl.validateURL(req.query.videolink)){
-    let urlParts=req.query.videolink.split('/watch?v=')
-  if(urlParts[1]===undefined){
-    urlParts=req.query.videolink.split('outu.be/')
-  }
-  ytdl.getInfo(req.query.videolink,(error, info)=>{
+    
+  ytdl.getBasicInfo(req.query.videolink,(error, info)=>{
     if(error){
       res.status(500)
       res.send('could not get info')
     }
-    res.send(JSON.stringify(info))
+    return res.send(info)
   })
   }else{
     res.status(404)
