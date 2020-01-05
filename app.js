@@ -1,5 +1,6 @@
 const express=require('express')
 const donwloader=require('./downloader')
+const search=require('./search')
 const app=express()
 const port=80;
 
@@ -13,6 +14,7 @@ app.use(function(req, res, next) {
 
 app.use("/ytdl", donwloader);
 
+app.use("/search", search);
 
 
 

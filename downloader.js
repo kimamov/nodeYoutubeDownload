@@ -1,6 +1,7 @@
 const express=require('express')
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
+const {pipeline} = require('stream');
 
 const router=express.Router();
 
@@ -34,14 +35,15 @@ router.get('/download',(req,res)=>{
   
         res.header('Content-Disposition', 'attachment; filename='+title+'.'+mime);
       }).on("response",(data)=>{
-        console.log(data.headers)
+        //console.log(data.headers)
       }).on('error',(error)=>{
         console.log(error)
         return res.end('download failed', 500)
       })
   
-  
-      return videoStream.pipe(res);
+      return pipeline(videoStream, res, error=>{
+        if(error) res.end('download failed', 500)
+      })
   
   
     }else{
