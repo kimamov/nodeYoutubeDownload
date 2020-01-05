@@ -37,7 +37,7 @@ router.get('/download',(req,res)=>{
       }).on("response",(data)=>{
         //console.log(data.headers)
       }).on('error',(error)=>{
-        console.log(error)
+        /* console.log(error) */
         return res.end('download failed', 500)
       })
   
@@ -65,7 +65,7 @@ router.get('/download',(req,res)=>{
         }
         return res.send("SIZE NOT FOUND", 404);
       }).on("error",()=>{
-        console.log(error)
+        /* console.log(error) */
         return res.send("SOMETHING WENT WRONG", 500)
       })
   
@@ -85,19 +85,18 @@ router.get('/download',(req,res)=>{
     /* start download */
     const download=ytdl(req.query.videolink, options);
   
-    let title='youtube_mp3';
     
     /* set title  */
     download.on("info",(info)=>{
-      title=req.query.name? req.query.name : info.player_response.videoDetails.title;
+      let title=req.query.name? req.query.name : info.player_response.videoDetails.title;
       /* make title ascii only */
-      title=title.replace('|','').replace(/[^\x00-\x7F]/g, "");  
+      title=title.replace('|','').replace(/[^\x00-\x7F]/g, "");
+      res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');  
     }).on("error",(error)=>{
-      console.log("download failed... "+error)
+      //console.log("download failed... "+error)
       return res.end("youtube download failed", 500)
     })
     
-    res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');
   
   
     stream = new ffmpeg(download)
@@ -107,11 +106,15 @@ router.get('/download',(req,res)=>{
     if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"') */
   
     stream.on('error', function (err) {
-      console.log("was closed")
-      console.log(err)
-      return res.end('failed to load video', 500)
+      /* console.log("was closed")
+      console.log(err) */
+      return res.end('failed to load mp3', 500)
     })
-    .format('mp3').pipe(res)
+    
+
+    pipeline(stream.format('mp3'), res, error=>{
+      res.end('stream failed or was close', 500)
+    })
   
     }else{
       res.end('NOT A YOUTUBE URL', 404)
