@@ -38,16 +38,16 @@ router.get('/download',(req,res)=>{
         //console.log(data.headers)
       }).on('error',(error)=>{
         /* console.log(error) */
-        return res.end('download failed', 500)
+        return res.send('download failed', 500)
       })
   
       return pipeline(videoStream, res, error=>{
-        if(error) res.end('download failed', 500)
+        if(error) return res.send('download failed', 500)
       })
   
   
     }else{
-      res.end('NOT A YOUTUBE URL', 404)
+      res.send('NOT A YOUTUBE URL', 404)
     }
   })
   
@@ -70,7 +70,7 @@ router.get('/download',(req,res)=>{
       })
   
     } 
-    else res.end("NOT A YOUTUBE URL", 404)
+    else res.send("NOT A YOUTUBE URL", 404)
   })
   
   
@@ -93,8 +93,8 @@ router.get('/download',(req,res)=>{
       title=title.replace('|','').replace(/[^\x00-\x7F]/g, "");
       res.header('Content-Disposition', 'attachment; filename='+title+'.mp3');  
     }).on("error",(error)=>{
-      //console.log("download failed... "+error)
-      return res.end("youtube download failed", 500)
+      console.log("download failed... "+error)
+      return res.send("youtube download failed", 500)
     })
     
   
@@ -106,18 +106,16 @@ router.get('/download',(req,res)=>{
     if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"') */
   
     stream.on('error', function (err) {
-      /* console.log("was closed")
-      console.log(err) */
-      return res.end('failed to load mp3', 500)
+      return res.status(500).send('failed to load mp3')
     })
     
 
-    pipeline(stream.format('mp3'), res, error=>{
-      res.end('stream failed or was close', 500)
+    return pipeline(stream.format('mp3'), res, error=>{
+      if(error) return res.status(500).end('stream failed or was closed')
     })
   
     }else{
-      res.end('NOT A YOUTUBE URL', 404)
+      return res.status(404).send('NOT A YOUTUBE URL')
     }
   })
   
@@ -159,7 +157,7 @@ router.get('/download',(req,res)=>{
     if(ytdl.validateURL(req.query.videolink)){
     ytdl.getInfo(req.query.videolink,(error, info)=>{
       if(error){
-        return res.end('could not get info', 500)
+        return res.send('could not get info', 500)
       }
       const simpleInfo=
         {
