@@ -42,7 +42,7 @@ router.get('/download',(req,res)=>{
       })
   
       return pipeline(videoStream, res, error=>{
-        if(error) return res.send('download failed', 500)
+        if(error) return res.end('download failed', 500)
       })
   
   
