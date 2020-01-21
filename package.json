@@ -16,6 +16,8 @@
     "fs": "0.0.1-security",
     "stream": "0.0.2",
     "ytdl-core": "^1.0.3",
-    "ytsr": "^0.1.10"
+    "cheerio": "^1.0.0-rc.3",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5"
   }
 }
