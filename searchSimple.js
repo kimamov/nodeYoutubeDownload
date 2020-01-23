@@ -9,7 +9,7 @@ const searchVideoSimple=(req, res)=>{
         console.log(e)
         return res.status(500).send("search failed");
       })
-  }else res.status(404).send("search string is required", 404)
+  }else res.status(404).send("search string is required")
   
 }
 
