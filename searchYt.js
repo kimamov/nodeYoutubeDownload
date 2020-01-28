@@ -16,13 +16,18 @@ function searchYt(query, page) {
                 if (videos.length) {
                     const videoList = [];
                     for (let i = 0; i < videos.length; i++) {
-                        const listItems = $("ul>li", videos[i]);
+                        const listItems = $("li", videos[i]);
                         const thumbnail=$("img", videos[i]).attr("data-thumb");
                         const linkTitle=$("h3>a", videos[i]).first();
+                        const listData=[]
+
+                        listItems.each(function(i, item){
+                            listData[i]=$(item).text()
+                        })
 
                         videoList.push({
-                            uploaded: listItems[0].children[0].data,
-                            views: listItems[1].children[0].data,
+                            uploaded: listData[0],
+                            views: listData[1],
                             thumbnail: thumbnail? thumbnail : $("img", videos[i]).attr("src"),
                             duration: $("span", videos[i]).first().text().trim("\n"),
                             title: linkTitle.text(),

@@ -20,6 +20,6 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
     "stream": "0.0.2",
-    "ytdl-core": "^1.0.3"
+    "ytdl-core": "^1.0.7"
   }
 }
