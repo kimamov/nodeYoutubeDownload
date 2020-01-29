@@ -3,6 +3,7 @@ const path = require('path');
 const donwloader=require('./downloader')
 /* const {searchVideo}=require('./search') */
 const searchVideoSimple=require('./searchSimple')
+const dlProxy=require("./dlProxy")
 const app=express()
 const port=process.env.PORT || 5000;
 
@@ -19,7 +20,7 @@ app.use("/api/ytdl", donwloader);
 
 app.use("/api/search", searchVideoSimple);
 
-/* app.use("/searchfull", searchVideo); */
+app.use("/api/dlproxy", dlProxy);
 
 
 

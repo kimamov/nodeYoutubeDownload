@@ -9,7 +9,7 @@ const router = express.Router();
 
 
 router.get('/download', (req, res) => {
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink)  || ytdl.validateID(req.query.videolink)) {
 
     const options = req.query.format ? {
       quality: Number(req.query.format)
@@ -46,12 +46,12 @@ router.get('/download', (req, res) => {
 
 
   } else {
-    res.send('NOT A YOUTUBE URL', 404)
+    res.status(404).send('NOT A YOUTUBE URL')
   }
 })
 
 router.get("/getsize", (req, res) => {
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink) || ytdl.validateID(req.query.videolink)) {
     const options = req.query.format ? {
       quality: Number(req.query.format)
     } : {};
@@ -67,7 +67,7 @@ router.get("/getsize", (req, res) => {
       return res.send("SIZE NOT FOUND", 404);
     }).on("error", () => {
       /* console.log(error) */
-      return res.send("SOMETHING WENT WRONG", 500)
+      return res.status(500).send("SOMETHING WENT WRONG")
     })
 
   } else res.send("NOT A YOUTUBE URL", 404)
@@ -77,7 +77,7 @@ router.get("/getsize", (req, res) => {
 
 
 router.get('/downloadmp3', async (req, res) => {
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink)  || ytdl.validateID(req.query.videolink)) {
 
     /* set format if was sent */
     const options = req.query.format ? {
@@ -108,7 +108,7 @@ router.get('/downloadmp3', async (req, res) => {
     if(req.query.artist) stream.outputOptions('-metadata artist="'+req.query.artist+'"') */
 
     stream.on('error', function (err) {
-      return res.status(500).send('failed to load mp3')
+      return res.end('failed to load mp3')
     })
 
 
@@ -137,7 +137,7 @@ extractOptions = (str) => {
 
 router.get('/info', (req, res) => {
   // send all info from api
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink)  || ytdl.validateID(req.query.videolink)) {
 
     ytdl.getBasicInfo(req.query.videolink, (error, info) => {
       if (error) {
@@ -156,7 +156,7 @@ router.get('/info', (req, res) => {
 
 router.get('/simpleinfo', (req, res) => {
   // send only basic info needed for the front end to save some data
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink)  || ytdl.validateID(req.query.videolink)) {
     ytdl.getInfo(req.query.videolink, (error, info) => {
       if (error) {
         return res.status(500).send('could not get info')
@@ -190,7 +190,7 @@ router.get('/simpleinfo', (req, res) => {
 
 router.get('/formatlist', (req, res) => {
   // send only updated formats since they the links fail after a while
-  if (ytdl.validateURL(req.query.videolink)) {
+  if (ytdl.validateURL(req.query.videolink)  || ytdl.validateID(req.query.videolink)) {
     ytdl.getInfo(req.query.videolink, (error, info) => {
       if (error) {
         res.status(500)
