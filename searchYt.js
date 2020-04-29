@@ -25,14 +25,21 @@ function searchYt(query, page) {
                             listData[i]=$(item).text()
                         })
 
-                        videoList.push({
-                            uploaded: listData[0],
-                            views: listData[1],
-                            thumbnail: thumbnail? thumbnail : $("img", videos[i]).attr("src"),
-                            duration: $("span", videos[i]).first().text().trim("\n"),
-                            title: linkTitle.text(),
-                            link: linkTitle.attr("href")
-                        })
+                        const title=linkTitle.text();
+                        const link=linkTitle.attr("href");
+
+                        // check if the output array alrady has a video with this link
+                        if(videoList.findIndex(video=>video.link===link)===-1){
+                            videoList.push({
+                                uploaded: listData[0],
+                                views: listData[1],
+                                thumbnail: thumbnail? thumbnail : $("img", videos[i]).attr("src"),
+                                duration: $("span", videos[i]).first().text().trim("\n"),
+                                title: title,
+                                link: link
+                            })
+                        }
+                        
                     }
                     const currentPage = page || 1;
                     resolve({
@@ -49,6 +56,7 @@ function searchYt(query, page) {
     })
 
 }
+
 
 
 //searchYt("tool", 2).then(data=>console.log(data)).catch(e=>console.log(e));
