@@ -2,18 +2,19 @@ const cheerio = require("cheerio");
 const request = require("request-promise");
 
 
-function searchYt(query, page) {
+function searchYt(query, page, userAgent) {
     return new Promise((resolve, reject) => {
         if (!query || typeof query !== "string") return reject(new Error("search param q with your search terms is required"))
 
         request({
             uri: `https://www.youtube.com/results?search_query=${query}${page ? `&page=${page}` : ""}`,
+            headers: {
+                'user-agent': userAgent
+            }
         })
             .then(data => {
                 const $ = cheerio.load(data);
-
                 const videos = $('div.yt-lockup.yt-lockup-tile.yt-lockup-video.vve-check.clearfix', data);
-                console.log(videos.length)
 
                 if (videos.length) {
 

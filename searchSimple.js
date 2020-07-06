@@ -3,7 +3,8 @@ const searchYt = require("./searchYt")
 
 const searchVideoSimple = (req, res) => {
   if (req.query.q) {
-    searchYt(req.query.q, req.query.page).then(data => {
+    //console.log(req.headers['user-agent'])
+    searchYt(req.query.q, req.query.page, req.headers['user-agent']).then(data => {
       return res.status(200).send(data);
     }).catch(e => {
       console.log(e)
