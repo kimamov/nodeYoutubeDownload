@@ -34,10 +34,10 @@ router.get('/download', (req, res) => {
 
       res.header('Content-Disposition', 'attachment; filename=' + title + '.' + mime);
     }).on("response", (data) => {
-      //console.log(data.headers)
+      /* console.log(data.headers) */
     }).on('error', (error) => {
       /* console.log(error) */
-      return res.send('download failed', 500)
+      return res.send.status(500).send('download failed')
     })
 
     return pipeline(videoStream, res, error => {
@@ -71,7 +71,7 @@ router.get("/getsize", (req, res) => {
         return res.status(500).send("SOMETHING WENT WRONG")
       })
     } catch (e) {
-      console.log(e);
+      /* console.log(e); */
       res.status(500).send("SOMETHING WENT WRONG")
     }
 
@@ -100,7 +100,7 @@ router.get('/downloadmp3', async (req, res) => {
       title = title.replace('|', '').replace(/[^\x00-\x7F]/g, "");
       res.header('Content-Disposition', 'attachment; filename=' + title + '.mp3');
     }).on("error", (error) => {
-      console.log("download failed... " + error)
+      /* console.log("download failed... " + error) */
       return res.send("youtube download failed", 500)
     })
 
@@ -140,7 +140,7 @@ extractOptions = (str) => {
 }
 
 
-router.get('/info', (req, res) => {
+/* router.get('/info', (req, res) => {
   // send all info from api
   if (ytdl.validateURL(req.query.videolink) || ytdl.validateID(req.query.videolink)) {
 
@@ -156,20 +156,20 @@ router.get('/info', (req, res) => {
     res.send('NOT A YOUTUBE URL')
   }
 
-})
+}) */
 
 
-router.get('/simpleinfo', (req, res) => {
+router.get('/simpleinfo', async (req, res) => {
   // send only basic info needed for the front end to save some data
   if (ytdl.validateURL(req.query.videolink) || ytdl.validateID(req.query.videolink)) {
-    ytdl.getInfo(req.query.videolink, (error, info) => {
-      if (error) {
-        return res.status(500).send('could not get info')
-      }
+    /* console.log("valid"); */
+    try {
+      const info=await ytdl.getInfo(req.query.videolink);
+      
       const simpleInfo = {
-        thumbnail: info.player_response.videoDetails.thumbnail.thumbnails[2].url || "",
-        title: info.title,
-        length: info.length_seconds,
+        thumbnail: info.videoDetails.thumbnail.thumbnails[2].url || "",
+        title: info.videoDetails.title,
+        length: info.videoDetails.lengthSeconds,
         formats: [],
       }
       if (info.formats) {
@@ -185,22 +185,22 @@ router.get('/simpleinfo', (req, res) => {
           })
         })
       }
-
       return res.send(simpleInfo)
-    })
+    } catch (error) {
+      return res.status(500).send('could not get info')
+    }
+    
   } else {
     res.status(404).send('NOT A YOUTUBE URL')
   }
 })
 
-router.get('/formatlist', (req, res) => {
+router.get('/formatlist', async (req, res) => {
   // send only updated formats since they the links fail after a while
   if (ytdl.validateURL(req.query.videolink) || ytdl.validateID(req.query.videolink)) {
-    ytdl.getInfo(req.query.videolink, (error, info) => {
-      if (error) {
-        res.status(500)
-        res.send('could not get info')
-      }
+    try {
+      const info=ytdl.getInfo(req.query.videolink)
+
       const simpleInfo = {
         formats: []
       }
@@ -215,9 +215,10 @@ router.get('/formatlist', (req, res) => {
           })
         })
       }
-
       res.send(simpleInfo)
-    })
+    } catch (error) {
+      res.status(500).send('could not get info')
+    }
   } else {
     res.status(404)
     res.send('NOT A YOUTUBE URL')
